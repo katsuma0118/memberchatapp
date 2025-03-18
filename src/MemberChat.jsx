@@ -104,6 +104,3 @@ export default function MemberChat() {
     </div>
   );
 }
-
-// 不足していたインポートを追加
-import { getApps, initializeApp } from 'firebase/app';
