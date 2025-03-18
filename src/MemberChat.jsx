@@ -3,6 +3,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
+// Firebase設定（あなたのFirebaseの情報）
 const firebaseConfig = {
   apiKey: "AIzaSyDyg3Za2miF_LjtNmlGOL9BEU3ueamuxFk",
   authDomain: "member-chat-app-38324.firebaseapp.com",
@@ -12,6 +13,7 @@ const firebaseConfig = {
   appId: "1:1017693624714:web:b901c65f7e5adc25d9d073"
 };
 
+// Firebase初期化
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -41,15 +43,7 @@ export default function MemberChat() {
   const handleLogin = () => {
     signInWithPopup(auth, provider).catch((error) => {
       console.error('Login Error:', error);
-      if (error.code === 'auth/popup-blocked') {
-        alert('ログインに失敗しました。ブラウザのポップアップを許可してください。');
-      } else if (error.code === 'auth/api-key-not-valid') {
-        alert('APIキーが無効です。Firebaseの設定を確認してください。');
-      } else if (error.code === 'auth/configuration-not-found') {
-        alert('FirebaseのGoogleログイン設定を確認してください。');
-      } else {
-        alert('ログインに失敗しました。再試行してください。');
-      }
+      alert('ログインに失敗しました。ブラウザのポップアップを許可してください。');
     });
   };
 
@@ -63,6 +57,10 @@ export default function MemberChat() {
     });
     setMessage('');
   };
+
+  const [user, setUser] = useState(null);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
 
   return (
     <div className="max-w-xl mx-auto mt-10">
