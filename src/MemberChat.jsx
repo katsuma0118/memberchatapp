@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from 'firebase/auth';
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDyg3Za2miF_LjtNmlGOL9BEU3ueamuxFk",
@@ -21,10 +21,15 @@ export default function MemberChat() {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [birthday, setBirthday] = useState('');
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (userDoc.exists()) setBirthday(userDoc.data().birthday || '');
+      }
     });
 
     const q = query(collection(db, 'messages'), orderBy('timestamp'));
@@ -41,15 +46,7 @@ export default function MemberChat() {
   const handleLogin = () => {
     signInWithPopup(auth, provider).catch((error) => {
       console.error('Login Error:', error);
-      if (error.code === 'auth/popup-blocked') {
-        alert('ログインに失敗しました。ブラウザのポップアップを許可してください。');
-      } else if (error.code === 'auth/api-key-not-valid') {
-        alert('APIキーが無効です。Firebaseの設定を確認してください。');
-      } else if (error.code === 'auth/configuration-not-found') {
-        alert('FirebaseのGoogleログイン設定を確認してください。');
-      } else {
-        alert('ログインに失敗しました。再試行してください。');
-      }
+      alert('ログインに失敗しました。ブラウザのポップアップを許可してください。');
     });
   };
 
@@ -64,6 +61,16 @@ export default function MemberChat() {
     setMessage('');
   };
 
+  const saveProfile = async () => {
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid), {
+      birthday,
+      displayName: user.displayName,
+      timestamp: serverTimestamp()
+    });
+    alert('プロフィールを保存しました');
+  };
+
   return (
     <div className="max-w-xl mx-auto mt-10">
       {!user ? (
@@ -76,6 +83,19 @@ export default function MemberChat() {
             <p className="font-bold">ようこそ、{user.displayName}さん！</p>
             <button onClick={() => signOut(auth)} className="p-2 bg-gray-300 rounded">
               ログアウト
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <h2 className="font-bold mb-2">プロフィール編集</h2>
+            <input
+              type="date"
+              className="border p-2 rounded mb-2"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+            />
+            <button onClick={saveProfile} className="ml-2 p-2 bg-green-500 text-white rounded">
+              保存
             </button>
           </div>
 
